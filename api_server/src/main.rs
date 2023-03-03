@@ -9,8 +9,8 @@ extern crate rocket_contrib;
 // #[macro_use]
 extern crate diesel;
 
-mod schema;
-// mod models;
+pub mod schema;
+pub mod models;
 
 use rocket::request::Request;
 use rocket_contrib::databases::diesel::PgConnection;

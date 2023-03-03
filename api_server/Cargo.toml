@@ -2,12 +2,18 @@
 name = "api_server"
 version = "0.0.1"
 authors = ["Richard Harris <richard.jonathon.harris@gmail.com>"]
+edition = "2021"
 
 [dependencies]
+chrono = "0.4.23"
 rocket = "0.4"
-diesel = { version = "1.4.1", features = ["postgres"] }
+diesel = { version = "2.0.3", features = ["postgres", "chrono"] }
+dotenvy = "0.15"
 serde = "1.0"
 serde_derive = "1.0"
+
+[[bin]]
+name = "list_encounters"
 
 [dependencies.rocket_contrib]
 version = "*"
