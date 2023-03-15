@@ -31,6 +31,12 @@ struct MonstersJson {
     count_monsters: i32,
 }
 
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ErrorJson {
+    error: String,
+}
+
 #[get("/")]
 fn index() -> Json<Index> {
     Json(Index {})
@@ -49,8 +55,6 @@ async fn monsters(db: &State<DatabaseConnection>) -> Result<Json<MonstersJson>, 
 
     let monsters_count = monsters.len();
 
-    println!("value is {:?}", monsters);
-
     Ok(
         Json(MonstersJson { 
             monsters: monsters, 
@@ -68,23 +72,16 @@ async fn rocket() -> _ {
 
     rocket::build()
         .manage(db)
-        .mount("/", FileServer::from(relative!("/static")))
         .mount(
             "/", 
             routes![index, monsters],
         )
         .register("/", catchers![not_found])
-        .attach(Template::fairing())
 }
 
 #[catch(404)]
-pub fn not_found(req: &Request<'_>) -> Template {
-    Template::render(
-        "error/404",
-        json! ({
-            "uri": req.uri()
-        })
-    )
+pub fn not_found(req: &Request<'_>) -> Json<ErrorJson> {
+    Json(ErrorJson { error: "The requested url was not found.".to_string() })
 }
 
 #[derive(Responder)]
