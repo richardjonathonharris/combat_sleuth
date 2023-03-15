@@ -125,12 +125,17 @@ async fn rocket() -> _ {
                 post_monster,
             ],
         )
-        .register("/", catchers![not_found])
+        .register("/", catchers![not_found, unprocessable_entity])
 }
 
 #[catch(404)]
 pub fn not_found(req: &Request<'_>) -> Json<ErrorJson> {
     Json(ErrorJson { error: "The requested url was not found.".to_string() })
+}
+
+#[catch(422)]
+pub fn unprocessable_entity(req: &Request<'_>) -> Json<ErrorJson> {
+    Json(ErrorJson { error: "The request could not be processed".to_string() })
 }
 
 #[derive(Responder)]
