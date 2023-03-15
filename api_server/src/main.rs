@@ -4,6 +4,7 @@ mod setup;
 use entities::{prelude::*, *};
 use rocket::{
     fs::{relative, FileServer},
+    serde::{Serialize, json::Json},
     *,
 };
 use rocket_dyn_templates::Template;
@@ -11,26 +12,51 @@ use sea_orm::*;
 use serde_json::json;
 use setup::set_up_db;
 
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+struct Index {}
+
+#[derive(Debug, Serialize)]
+#[serde(crate = "rocket::serde")]
+struct MonsterJson {
+    id: i32,
+    name: String,
+    hp: i32,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(crate = "rocket::serde")]
+struct MonstersJson {
+    monsters: Vec<MonsterJson>,
+    count_monsters: i32,
+}
+
 #[get("/")]
-fn index() -> Template {
-    Template::render("index", json!({}))
+fn index() -> Json<Index> {
+    Json(Index {})
 }
 
 #[get("/monsters")]
-async fn monsters(db: &State<DatabaseConnection>) -> Result<Template, ErrorResponder> {
+async fn monsters(db: &State<DatabaseConnection>) -> Result<Json<MonstersJson>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     let monsters = Monster::find()
         .all(db)
         .await?
         .into_iter()
-        .map(|m| json!({ "name": m.name, "id": m.id }))
+        .map(|m| MonsterJson{ id: m.id, name: m.name, hp: m.hp})
         .collect::<Vec<_>>();
 
-    Ok(Template::render(
-        "monsters",
-        json!({ "monsters": monsters, "num_monsters": monsters.len() }),
-    ))
+    let monsters_count = monsters.len();
+
+    println!("value is {:?}", monsters);
+
+    Ok(
+        Json(MonstersJson { 
+            monsters: monsters, 
+            count_monsters: monsters_count as i32,
+        })
+    )
 }
 
 #[launch]
