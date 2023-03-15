@@ -1,4 +1,4 @@
-use sea_orm_migration::prelude::*;
+pub use sea_orm_migration::prelude::*;
 
 mod m20230310_000001_create_monster_table;
 
@@ -9,6 +9,6 @@ impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m20230310_000001_create_monster_table::Migration),
-        ]
+            ]
     }
 }
