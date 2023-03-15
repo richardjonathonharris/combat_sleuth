@@ -1,0 +1,22 @@
+{% extends "base" %} {% block content %}
+<h1>All Monsters</h1>
+
+<div class="twelve columns">
+    <a href="/">
+        <input type="button" value="Back" />
+    </a>
+</div>
+
+<div class="twelve columns">
+    {% if num_monsters == 0 %} No monsters {% else %}
+    <ul>
+        {% for monster in monsters %}
+        <li>
+            <a href="/monsters/{{ monster.id }}">{{ monster.name }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
+{% endblock content %}

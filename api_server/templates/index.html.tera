@@ -1,0 +1,16 @@
+{% extends "base" %} {% block content %}
+<h1>Hello, SleuthDB!</h1>
+
+<div class="twelve columns">
+    <a href="/monsters">
+        <input type="button" value="Check all monsters" />
+    </a>
+</div>
+
+<div class="twelve columns">
+    <a href="/new">
+        <input type="button" value="Register a new monster" />
+    </a>
+</div>
+
+{% endblock content %}

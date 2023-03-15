@@ -1,0 +1,1 @@
+pub use super::monster::Entity as Monster;
