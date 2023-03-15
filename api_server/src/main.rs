@@ -3,13 +3,10 @@ mod setup;
 
 use entities::{prelude::*, *};
 use rocket::{
-    fs::{relative, FileServer},
-    serde::{Serialize, json::Json},
+    serde::{Deserialize, Serialize, json::Json},
     *,
 };
-use rocket_dyn_templates::Template;
 use sea_orm::*;
-use serde_json::json;
 use setup::set_up_db;
 
 #[derive(Serialize)]
@@ -20,6 +17,13 @@ struct Index {}
 #[serde(crate = "rocket::serde")]
 struct MonsterJson {
     id: i32,
+    name: String,
+    hp: i32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(crate = "rocket::serde")]
+struct IncomingMonsterJson {
     name: String,
     hp: i32,
 }
@@ -37,12 +41,12 @@ pub struct ErrorJson {
     error: String,
 }
 
-#[get("/")]
+#[get("/", format = "json")]
 fn index() -> Json<Index> {
     Json(Index {})
 }
 
-#[get("/monsters")]
+#[get("/monsters", format = "json")]
 async fn monsters(db: &State<DatabaseConnection>) -> Result<Json<MonstersJson>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
@@ -63,6 +67,29 @@ async fn monsters(db: &State<DatabaseConnection>) -> Result<Json<MonstersJson>, 
     )
 }
 
+#[post("/monster", format = "json", data = "<incoming_monster>")]
+async fn post_monster(incoming_monster: Json<IncomingMonsterJson>, db: &State<DatabaseConnection>) -> Result<Json<MonsterJson>, ErrorResponder> {
+    let db = db as &DatabaseConnection;
+
+    let new_monster = monster::ActiveModel {
+        name: ActiveValue::Set(incoming_monster.name.to_owned()),
+        hp: ActiveValue::Set(incoming_monster.hp.to_owned()),
+        ..Default::default()
+    };
+
+    let returned_monster = Monster::insert(new_monster)
+        .exec(db)
+        .await?;
+
+    Ok(
+        Json(MonsterJson {
+            id: returned_monster.last_insert_id,
+            name: incoming_monster.name.to_owned(),
+            hp: incoming_monster.hp.to_owned(),
+        })
+    )
+}
+
 #[launch]
 async fn rocket() -> _ {
     let db = match set_up_db().await {
@@ -74,7 +101,7 @@ async fn rocket() -> _ {
         .manage(db)
         .mount(
             "/", 
-            routes![index, monsters],
+            routes![index, monsters, post_monster],
         )
         .register("/", catchers![not_found])
 }
