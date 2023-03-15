@@ -47,7 +47,7 @@ fn index() -> Json<Index> {
 }
 
 #[get("/monsters", format = "json")]
-async fn monsters(db: &State<DatabaseConnection>) -> Result<Json<MonstersJson>, ErrorResponder> {
+async fn list_monsters(db: &State<DatabaseConnection>) -> Result<Json<MonstersJson>, ErrorResponder> {
     let db = db as &DatabaseConnection;
 
     let monsters = Monster::find()
@@ -65,6 +65,23 @@ async fn monsters(db: &State<DatabaseConnection>) -> Result<Json<MonstersJson>, 
             count_monsters: monsters_count as i32,
         })
     )
+}
+
+#[get("/monster/<id>", format = "json")] 
+async fn get_monster(id: i32, db: &State<DatabaseConnection>) -> Result<Json<MonsterJson>, ErrorResponder> {
+    let db = db as &DatabaseConnection;
+
+    let found_monster = Monster::find_by_id(id).one(db).await?;
+
+    Ok(if let Some(found_monster) = found_monster {
+        Json(MonsterJson {
+            id: found_monster.id,
+            name: found_monster.name,
+            hp: found_monster.hp,
+        })
+    } else {
+        return Err(format!("Could not locate monster with id {id}.").to_string().into());
+    })
 }
 
 #[post("/monster", format = "json", data = "<incoming_monster>")]
@@ -101,7 +118,12 @@ async fn rocket() -> _ {
         .manage(db)
         .mount(
             "/", 
-            routes![index, monsters, post_monster],
+            routes![
+                index, 
+                get_monster,
+                list_monsters, 
+                post_monster,
+            ],
         )
         .register("/", catchers![not_found])
 }
